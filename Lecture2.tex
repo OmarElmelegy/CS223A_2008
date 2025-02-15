@@ -1,0 +1,506 @@
+\documentclass{article}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{bm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{physics}
+\usepackage{siunitx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\geometry{
+  a4paper,
+  left=25mm,
+  right=25mm,
+  top=25mm,
+  bottom=25mm,
+}
+
+\title{Introduction to Robotics: Lecture 2 Notes}
+\author{Based on Lectures by Professor Oussama Khatib}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction to Kinematics}
+
+Kinematics is the study of motion without considering the forces that cause it. It is fundamental in robotics for understanding and modeling the positions, orientations, and motions of robotic manipulators. This lecture focuses on the foundational concepts of kinematics, including spatial descriptions, transformations, and representations of position and orientation.
+
+\section{Robotic Manipulators: Links and Joints}
+
+A \textbf{robotic manipulator} consists of a series of \textbf{links} connected by \textbf{joints}. The structure can be divided into:
+
+\begin{itemize}
+    \item \textbf{Base Link}: The fixed link, serving as the reference frame.
+    \item \textbf{Moving Links}: Intermediate links connected through joints.
+    \item \textbf{End-Effector}: The last link, used to interact with the environment (e.g., gripper, tool).
+\end{itemize}
+
+The primary goal is to control the position and orientation of the end-effector to perform tasks such as manipulation.
+
+\subsection{Types of Joints}
+
+There are two fundamental types of joints in robotic manipulators:
+
+\begin{enumerate}
+    \item \textbf{Revolute Joint (Rotational)}: Allows rotation about a fixed axis.
+    \item \textbf{Prismatic Joint (Translational)}: Allows translation along a fixed axis.
+\end{enumerate}
+
+Both joint types provide \textbf{one degree of freedom} (DOF).
+
+\paragraph{Higher DOF Joints}
+
+Complex joints like \textbf{spherical joints} (3 DOF) can be modeled by combining multiple revolute joints with zero link lengths.
+
+\subsection{Degrees of Freedom}
+
+The \textbf{degree of freedom} refers to an independent parameter that defines the configuration of a system.
+
+\subsubsection{Calculating DOF}
+
+For a manipulator with $n$ moving links:
+
+\begin{itemize}
+    \item Each link in space requires 6 parameters (3 for position, 3 for orientation).
+    \item Total parameters without constraints: $6n$.
+    \item Each joint introduces constraints, allowing only 1 DOF (introducing 5 constraints).
+    \item Total constraints from joints: $5n$.
+    \item Therefore, total DOF: $6n - 5n = n$.
+\end{itemize}
+
+For a manipulator with a fixed base, the total DOF is equal to the number of joints, $n$.
+
+\paragraph{Mobile Bases}
+
+For robots with mobile bases (e.g., humanoid robots), the base contributes additional DOF (typically 6). Thus, the total DOF becomes $n + 6$.
+
+\subsection{Configuration Representation}
+
+\paragraph{Configuration Parameters}
+
+Parameters that fully describe the position and orientation of each link in the manipulator. They can be:
+
+\begin{itemize}
+    \item \textbf{Redundant}: More parameters than necessary.
+    \item \textbf{Minimal}: The smallest set of parameters that fully describe the system.
+\end{itemize}
+
+\subsubsection{Generalized Coordinates}
+
+A minimal set of independent parameters that uniquely define the configuration of the system. The number of generalized coordinates corresponds to the system's DOF.
+
+\paragraph{Example}
+
+If each link is represented using three points (vectors), each with three components, this results in 9 parameters per link. However, these parameters are not all independent due to geometric constraints. Generalized coordinates aim to minimize the number of parameters by exploiting these dependencies.
+
+\subsubsection{Joint Space}
+
+Also known as the \textbf{configuration space}, it is defined by the joint variables (e.g., joint angles for revolute joints). A point in joint space represents a specific configuration of the manipulator:
+
+$$
+\bm{\theta} = [\theta_1, \theta_2, \dots, \theta_n]^T
+$$
+
+\paragraph{Importance in Motion Planning}
+
+The joint space is crucial for planning movements, avoiding obstacles, and ensuring the manipulator operates within its physical limits.
+
+\subsubsection{Operational Space}
+
+Also known as the \textbf{task space}, defined by the position and orientation of the end-effector:
+
+$$
+\mathbf{x} = [x, y, z, \phi, \theta, \psi]^T
+$$
+
+These are the \textbf{operational coordinates} or \textbf{task coordinates}, representing the end-effector's pose in space.
+
+\paragraph{Degrees of Freedom of the End-Effector}
+
+\begin{itemize}
+    \item In 3D space: Maximum of 6 DOF (3 for position, 3 for orientation).
+    \item In a plane: 3 DOF (2 for position, 1 for orientation).
+\end{itemize}
+
+\subsection{Redundancy}
+
+A manipulator is \textbf{redundant} if it has more DOF than required to perform a task:
+
+$$
+\text{Degree of Redundancy} = n - m_0
+$$
+
+Where:
+
+\begin{itemize}
+    \item $n$ is the number of manipulator DOF.
+    \item $m_0$ is the number of DOF required for the end-effector.
+\end{itemize}
+
+\paragraph{Benefits of Redundancy}
+
+\begin{itemize}
+    \item Improved obstacle avoidance.
+    \item Enhanced dexterity and flexibility.
+    \item Ability to optimize secondary criteria (e.g., energy efficiency, singularity avoidance).
+\end{itemize}
+
+\section{Spatial Descriptions and Transformations}
+
+\subsection{Points and Vectors}
+
+A point $P$ in space is represented by a position vector $\mathbf{p}$ from a reference origin $O$. The vector depends on the choice of origin; changing the origin changes the vector components.
+
+\subsection{Coordinate Frames}
+
+A coordinate frame consists of an origin and three orthogonal unit vectors $\{\mathbf{x}, \mathbf{y}, \mathbf{z}\}$. Frames are used to describe the position and orientation of objects.
+
+\begin{itemize}
+    \item \textbf{Reference Frame (Frame A)}: The fixed frame.
+    \item \textbf{Body Frame (Frame B)}: Attached to a moving rigid body (e.g., a link).
+\end{itemize}
+
+\subsubsection{Transformation Between Frames}
+
+To describe Frame B relative to Frame A, we need:
+
+\begin{itemize}
+    \item \textbf{Rotation Matrix} $R^A_B$: Describes the orientation of Frame B relative to Frame A.
+    \item \textbf{Position Vector} $\mathbf{d}^A_B$: Describes the origin of Frame B relative to Frame A.
+\end{itemize}
+
+\subsection{Rotation Matrices}
+
+\subsubsection{Definition}
+
+A rotation matrix $R \in SO(3)$ represents the orientation of one frame relative to another:
+
+$$
+R = \begin{bmatrix}
+r_{11} & r_{12} & r_{13} \\
+r_{21} & r_{22} & r_{23} \\
+r_{31} & r_{32} & r_{33}
+\end{bmatrix}
+$$
+
+Properties:
+
+\begin{itemize}
+    \item Orthogonal: $R^T R = RR^T = I$
+    \item Determinant: $\det(R) = +1$
+\end{itemize}
+
+\subsubsection{Components of Rotation Matrix}
+
+The columns of $R^A_B$ are the components of Frame B's axes expressed in Frame A:
+
+$$
+R^A_B = \begin{bmatrix}
+\mathbf{x}_B^A & \mathbf{y}_B^A & \mathbf{z}_B^A
+\end{bmatrix}
+$$
+
+\paragraph{Computing Components}
+
+Each component is found by projecting the axes of Frame B onto the axes of Frame A (e.g., $\mathbf{x}_B^A = [r_{11}, r_{21}, r_{31}]^T$).
+
+\subsubsection{Inverse Rotation}
+
+The inverse of a rotation matrix is its transpose:
+
+$$
+(R^A_B)^{-1} = (R^A_B)^T = R^B_A
+$$
+
+\subsubsection{Example}
+
+Consider a frame rotated around the $x$-axis:
+
+$$
+R = \begin{bmatrix}
+1 & 0 & 0 \\
+0 & \cos\theta & -\sin\theta \\
+0 & \sin\theta & \cos\theta
+\end{bmatrix}
+$$
+
+\subsection{Homogeneous Transformations}
+
+\subsubsection{Definition}
+
+A homogeneous transformation matrix combines rotation and translation into a single $4 \times 4$ matrix:
+
+$$
+T = \begin{bmatrix}
+R & \mathbf{d} \\
+\mathbf{0}^T & 1
+\end{bmatrix}
+$$
+
+Where:
+
+\begin{itemize}
+    \item $R$ is the $3 \times 3$ rotation matrix.
+    \item $\mathbf{d}$ is the $3 \times 1$ translation vector.
+\end{itemize}
+
+\subsubsection{Transforming Points}
+
+To transform a point from Frame B to Frame A:
+
+$$
+\begin{bmatrix}
+\mathbf{p}^A \\
+1
+\end{bmatrix}
+= T^A_B \begin{bmatrix}
+\mathbf{p}^B \\
+1
+\end{bmatrix}
+$$
+
+\paragraph{Example}
+
+Given $T^A_B$ and a point $\mathbf{p}^B$, compute $\mathbf{p}^A$ by matrix multiplication.
+
+\subsubsection{Composition of Transformations}
+
+Transformations can be composed via matrix multiplication:
+
+$$
+T^A_C = T^A_B T^B_C
+$$
+
+\subsubsection{Inverse Transformation}
+
+The inverse of a homogeneous transformation:
+
+$$
+T^{-1} = \begin{bmatrix}
+R^T & -R^T \mathbf{d} \\
+\mathbf{0}^T & 1
+\end{bmatrix}
+$$
+
+\subsection{Representing Positions and Orientations}
+
+\subsubsection{Euler Angles}
+
+Orientation can be represented using three angles, specifying a sequence of rotations about axes. Common sequences include:
+
+\begin{itemize}
+    \item Intrinsic rotations (body-fixed axes): Z-X-Z, Z-Y-X.
+    \item Extrinsic rotations (space-fixed axes): X-Y-Z, Y-Z-X.
+\end{itemize}
+
+\paragraph{Advantages and Limitations}
+
+\begin{itemize}
+    \item Simple interpretation.
+    \item May suffer from singularities (gimbal lock).
+\end{itemize}
+
+\subsubsection{Axis-Angle Representation}
+
+Any rotation can be represented by an axis $\mathbf{k}$ and an angle $\theta$:
+
+$$
+R = I + \sin\theta [\mathbf{k}]_\times + (1 - \cos\theta) [\mathbf{k}]_\times^2
+$$
+
+Where $[\mathbf{k}]_\times$ is the skew-symmetric matrix of $\mathbf{k}$.
+
+\subsubsection{Quaternions}
+
+Quaternions provide a singularity-free representation of orientation using four parameters:
+
+$$
+q = \begin{bmatrix}
+q_0 \\ q_1 \\ q_2 \\ q_3
+\end{bmatrix}, \quad \| q \| = 1
+$$
+
+Used extensively in 3D graphics and aerospace applications.
+
+\subsubsection{Rotation Matrices}
+
+Alternatively, orientations can be represented directly using rotation matrices, providing a full description with nine parameters (though only three are independent).
+
+\section{Transformation Interpretations}
+
+\subsection{Mapping vs. Operators}
+
+\paragraph{Mapping}
+
+Changing the \textbf{description} of the same vector from one frame to another without altering the vector itself.
+
+\paragraph{Operators}
+
+Applying a transformation to a vector, thereby changing the vector's magnitude or direction (e.g., rotating or translating a point in space).
+
+\subsection{Transformation Operators}
+
+\subsubsection{Rotation Operators}
+
+A rotation can be applied to a vector to produce a new vector:
+
+$$
+\mathbf{p}_2 = R \mathbf{p}_1
+$$
+
+\paragraph{Example}
+
+Rotating a point $\mathbf{p}_1$ about the $x$-axis by angle $\theta$.
+
+\subsubsection{Translation Operators}
+
+A translation moves a vector by a displacement $\mathbf{d}$:
+
+$$
+\mathbf{p}_2 = \mathbf{p}_1 + \mathbf{d}
+$$
+
+\subsubsection{Combined Rotation and Translation}
+
+A general transformation combining rotation and translation:
+
+$$
+\mathbf{p}_2 = R \mathbf{p}_1 + \mathbf{d}
+$$
+
+\section{Inverse Transformations}
+
+\subsection{Inverse Rotation}
+
+As previously noted, the inverse of a rotation matrix is its transpose:
+
+$$
+R^{-1} = R^T
+$$
+
+\subsection{Inverse Homogeneous Transformation}
+
+The inverse of a homogeneous transformation matrix is:
+
+$$
+T^{-1} = \begin{bmatrix}
+R^T & -R^T \mathbf{d} \\
+\mathbf{0}^T & 1
+\end{bmatrix}
+$$
+
+\paragraph{Interpretation}
+
+This inversion involves transposing the rotation matrix and transforming the translation vector appropriately.
+
+\section{Serial Kinematic Chains}
+
+\subsection{Denavit-Hartenberg (DH) Convention}
+
+A systematic method to assign coordinate frames to each link and joint of a manipulator, using four parameters per link:
+
+\begin{itemize}
+    \item \textbf{Link Length} ($a_i$): Distance between $Z_{i-1}$ and $Z_i$ along $X_i$.
+    \item \textbf{Link Twist} ($\alpha_i$): Angle between $Z_{i-1}$ and $Z_i$ about $X_i$.
+    \item \textbf{Link Offset} ($d_i$): Distance from $X_{i-1}$ to $X_i$ along $Z_{i-1}$.
+    \item \textbf{Joint Angle} ($\theta_i$): Angle from $X_{i-1}$ to $X_i$ about $Z_{i-1}$.
+\end{itemize}
+
+\subsection{Forward Kinematics}
+
+Computing the position and orientation of the end-effector given the joint parameters:
+
+$$
+T_{0n} = \prod_{i=1}^n T_i
+$$
+
+Where $T_i$ is the homogeneous transformation from link $i-1$ to link $i$.
+
+\subsection{Building the Kinematic Model}
+
+\begin{enumerate}
+    \item Assign coordinate frames to each link following the DH convention.
+    \item Determine the DH parameters for each link.
+    \item Write the homogeneous transformation matrices using these parameters.
+    \item Multiply the matrices to obtain the end-effector transformation.
+\end{enumerate}
+
+\section{Examples and Applications}
+
+\subsection{Planar Manipulator}
+
+Consider a planar manipulator with three revolute joints:
+
+\begin{itemize}
+    \item Joint variables: $\theta_1$, $\theta_2$, $\theta_3$.
+    \item End-effector position: $[x, y]$.
+    \item End-effector orientation: $\alpha$.
+\end{itemize}
+
+\paragraph{Configuration and Operational Space}
+
+\begin{itemize}
+    \item \textbf{Joint Space (Configuration Space)}: $\bm{\theta} = [\theta_1, \theta_2, \theta_3]^T$.
+    \item \textbf{Operational Space (Task Space)}: $\mathbf{x} = [x, y, \alpha]^T$.
+\end{itemize}
+
+\subsubsection{Redundant Manipulator}
+
+Adding an extra joint introduces redundancy:
+
+\begin{itemize}
+    \item $n = 4$ joints.
+    \item Operational DOF: $m_0 = 3$.
+    \item Degree of redundancy: $n - m_0 = 1$.
+\end{itemize}
+
+\paragraph{Implications of Redundancy}
+
+Multiple joint configurations can achieve the same end-effector pose, allowing for optimization of other criteria.
+
+\subsection{Transformation Between Links}
+
+\paragraph{Example}
+
+Compute the homogeneous transformation between consecutive links using rotation and translation matrices.
+
+\subsubsection{Rotation about X-axis}
+
+$$
+R_x(\theta) = \begin{bmatrix}
+1 & 0 & 0 \\
+0 & \cos\theta & -\sin\theta \\
+0 & \sin\theta & \cos\theta
+\end{bmatrix}
+$$
+
+\subsubsection{Translation along Z-axis}
+
+$$
+T_z(d) = \begin{bmatrix}
+I & \begin{bmatrix} 0 \\ 0 \\ d \end{bmatrix} \\
+\mathbf{0}^T & 1
+\end{bmatrix}
+$$
+
+\subsubsection{Combined Transformation}
+
+$$
+T = T_z(d) R_x(\theta)
+$$
+
+\section{Conclusion}
+
+Understanding spatial descriptions and transformations is fundamental in robotics kinematics. Mastery of coordinate frames, rotation matrices, and homogeneous transformations allows for precise modeling of manipulator positions and orientations. These foundational concepts are essential for designing control algorithms, motion planning, and ensuring successful interaction with the environment.
+
+\end{document}
+
